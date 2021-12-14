@@ -354,6 +354,10 @@ uint8_t usb_detect() {
   return usb_device_configured;
 }
 
+bool usb_serial_available() {
+  return circular_buffer_available(&rx_buffer);
+}
+
 uint32_t usb_serial_read(uint8_t *data, uint32_t len) {
   if (data == NULL || len == 0) {
     return 0;

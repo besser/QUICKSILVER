@@ -16,6 +16,8 @@
 #include "io/vtx.h"
 #include "osd/osd_render.h"
 #include "profile.h"
+#include "project.h"
+#include "scheduler.h"
 #include "util/cbor_helper.h"
 
 #define ENCODE_BUFFER_SIZE 2048
@@ -216,7 +218,7 @@ static void get_quic(quic_t *quic, cbor_value_t *dec) {
   }
 #ifdef DEBUG
   case QUIC_VAL_PERF_COUNTERS: {
-    res = cbor_encode_perf_counters(&enc);
+    res = cbor_encode_task_stats(&enc);
     check_cbor_error(QUIC_CMD_GET);
     quic_send(quic, QUIC_CMD_GET, QUIC_FLAG_NONE, encode_buffer, cbor_encoder_len(&enc));
     break;

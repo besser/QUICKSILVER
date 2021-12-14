@@ -167,8 +167,3 @@ int8_t buf_equal(const uint8_t *str1, size_t len1, const uint8_t *str2, size_t l
 int8_t buf_equal_string(const uint8_t *str1, size_t len1, const char *str2) {
   return buf_equal(str1, len1, (const uint8_t *)str2, strlen(str2));
 }
-
-void reset_looptime() {
-  extern uint32_t lastlooptime;
-  lastlooptime = time_micros();
-}

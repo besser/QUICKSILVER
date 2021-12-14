@@ -84,6 +84,4 @@ void perf_counter_end(perf_counters_t counter) {}
 void perf_counter_init() {}
 void perf_counter_update() {}
 
-void debug_update() {}
-
 #endif
