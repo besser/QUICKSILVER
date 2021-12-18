@@ -81,7 +81,8 @@ static void do_run_task(task_t *task) {
     task->runtime_min = time_taken;
   }
 
-  task->runtime_avg = -task->runtime_avg / TASK_AVERAGE_SAMPLES + time_taken;
+  task->runtime_avg_sum += time_taken - task->runtime_avg_sum / TASK_AVERAGE_SAMPLES;
+  task->runtime_avg = task->runtime_avg_sum / TASK_AVERAGE_SAMPLES;
 
   if (time_taken > task->runtime_max) {
     task->runtime_max = time_taken;

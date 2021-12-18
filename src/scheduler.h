@@ -41,6 +41,8 @@ typedef struct {
   int32_t runtime_min;
   int32_t runtime_avg;
   int32_t runtime_max;
+
+  int32_t runtime_avg_sum;
 } task_t;
 
 #define CREATE_TASK(p_name, p_subname, p_mask, p_priority, p_poll_func, p_func) \
@@ -55,6 +57,7 @@ typedef struct {
     .runtime_min = UINT32_MAX,                                                  \
     .runtime_avg = 0,                                                           \
     .runtime_max = 0,                                                           \
+    .runtime_avg_sum = 0,                                                       \
   }
 
 void scheduler_init();
