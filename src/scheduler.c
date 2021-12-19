@@ -33,7 +33,7 @@ static bool task_queue_push(task_t *task) {
     return false;
   }
   for (uint32_t i = 0; i < TASK_MAX; i++) {
-    if (task_queue[i] != NULL && task_queue[i]->priority < task->priority) {
+    if (task_queue[i] != NULL && task_queue[i]->priority <= task->priority) {
       continue;
     }
 
