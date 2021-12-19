@@ -10,8 +10,11 @@
 #include "util/cbor_helper.h"
 
 #define TASK_AVERAGE_SAMPLES 32
-#define TASK_RUNTIME_REDUCTION 0.9
-#define TASK_RUNTIME_BUFFER 10
+#define TASK_RUNTIME_REDUCTION 0.99
+#define TASK_RUNTIME_BUFFER 15
+
+#define US_TO_CYCLES(us) ((us)*TICKS_PER_US)
+#define CYCLES_TO_US(cycles) ((cycles) / TICKS_PER_US)
 
 uint8_t looptime_warning;
 uint8_t blown_loop_counter;
@@ -49,30 +52,28 @@ static bool task_queue_push(task_t *task) {
   return false;
 }
 
-static bool should_run_task(const uint32_t start_time, uint8_t task_mask, task_t *task) {
-  const uint32_t now = time_micros();
-
+static bool should_run_task(const uint32_t start_cycles, uint8_t task_mask, task_t *task) {
   if ((task_mask & task->mask) == 0) {
     // task shall not run in this firmware state
     return false;
   }
 
-  if ((now - task->last_run_time) < (state.looptime_autodetect + TASK_RUNTIME_BUFFER)) {
+  if ((int32_t)(task->last_run_time - start_cycles) > 0) {
     // task was already run this loop
     return false;
   }
 
   if (task->poll_func != NULL && !task->poll_func()) {
     // task has poll function and does not need updating
-    if (task->period == 0 || (now - task->last_run_time) < task->period) {
+    if (task->period == 0 || (time_cycles() - task->last_run_time) < US_TO_CYCLES(task->period)) {
       // task does not have a period associated, can skip
       return false;
     }
   }
 
-  const int32_t time_left = state.looptime_autodetect - (now - start_time);
-  if (task->runtime_avg > (time_left + TASK_RUNTIME_BUFFER)) {
-    // we dont have any time left this loop
+  const int32_t time_left = US_TO_CYCLES(state.looptime_autodetect - TASK_RUNTIME_BUFFER) - (time_cycles() - start_cycles);
+  if (task->priority != TASK_PRIORITY_REALTIME && task->runtime_avg > time_left) {
+    // we dont have any time left this loop and task is not realtime
     task->runtime_avg *= TASK_RUNTIME_REDUCTION;
     return false;
   }
@@ -81,10 +82,10 @@ static bool should_run_task(const uint32_t start_time, uint8_t task_mask, task_t
 }
 
 static void do_run_task(task_t *task) {
-  const uint32_t start = time_micros();
+  const uint32_t start = time_cycles();
   task->last_run_time = start;
   task->func();
-  const int32_t time_taken = time_micros() - start;
+  const int32_t time_taken = time_cycles() - start;
 
   if (time_taken < task->runtime_min) {
     task->runtime_min = time_taken;
@@ -99,7 +100,7 @@ static void do_run_task(task_t *task) {
   }
 }
 
-static void run_tasks(const uint32_t start_time) {
+static void run_tasks(const uint32_t start_cycles) {
   uint8_t task_mask = 0;
 
   if (flags.on_ground && !flags.arm_state) {
@@ -109,17 +110,11 @@ static void run_tasks(const uint32_t start_time) {
     task_mask |= TASK_MASK_IN_AIR;
   }
 
-  while (true) {
-    // loop as long as we have timeleft
-    const int32_t time_left = state.looptime_autodetect - (time_micros() - start_time);
-    if (time_left <= TASK_RUNTIME_BUFFER) {
-      break;
-    }
-
+  while ((time_cycles() - start_cycles) < US_TO_CYCLES(state.looptime_autodetect - TASK_RUNTIME_BUFFER)) {
     for (uint32_t i = 0; i < task_queue_size; i++) {
       task_t *task = task_queue[i];
 
-      if (!should_run_task(start_time, task_mask, task)) {
+      if (!should_run_task(start_cycles, task_mask, task)) {
         continue;
       }
 
@@ -184,6 +179,7 @@ void scheduler_init() {
 }
 
 void scheduler_update() {
+  const uint32_t cycles = time_cycles();
   const uint32_t time = time_micros();
   state.looptime_us = ((uint32_t)(time - lastlooptime));
   lastlooptime = time;
@@ -210,7 +206,7 @@ void scheduler_update() {
     failloop(FAILLOOP_SPI_MAIN);
   }
 
-  run_tasks(time);
+  run_tasks(cycles);
 
   state.cpu_load = (time_micros() - lastlooptime);
   while ((time_micros() - time) < state.looptime_autodetect)
@@ -224,6 +220,12 @@ void reset_looptime() {
 
 #ifdef DEBUG
 
+#define ENCODE_CYCLES(val)                                \
+  {                                                       \
+    const uint32_t us = CYCLES_TO_US(val);                \
+    CBOR_CHECK_ERROR(res = cbor_encode_uint32(enc, &us)); \
+  }
+
 cbor_result_t cbor_encode_task_stats(cbor_value_t *enc) {
   CBOR_CHECK_ERROR(cbor_result_t res = cbor_encode_array_indefinite(enc));
 
@@ -234,16 +236,16 @@ cbor_result_t cbor_encode_task_stats(cbor_value_t *enc) {
     CBOR_CHECK_ERROR(res = cbor_encode_str(enc, tasks[i].name));
 
     CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "last_run_time"));
-    CBOR_CHECK_ERROR(res = cbor_encode_uint32(enc, &tasks[i].last_run_time));
+    ENCODE_CYCLES(tasks[i].last_run_time)
 
     CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "min"));
-    CBOR_CHECK_ERROR(res = cbor_encode_uint32(enc, &tasks[i].runtime_min));
+    ENCODE_CYCLES(tasks[i].runtime_min)
 
     CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "avg"));
-    CBOR_CHECK_ERROR(res = cbor_encode_uint32(enc, &tasks[i].runtime_avg));
+    ENCODE_CYCLES(tasks[i].runtime_avg)
 
     CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "max"));
-    CBOR_CHECK_ERROR(res = cbor_encode_uint32(enc, &tasks[i].runtime_max));
+    ENCODE_CYCLES(tasks[i].runtime_max)
 
     CBOR_CHECK_ERROR(res = cbor_encode_end_indefinite(enc));
   }
