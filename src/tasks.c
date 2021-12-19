@@ -70,16 +70,20 @@ bool task_usb_poll() {
   return false;
 }
 
-task_t tasks[TASK_MAX] = {
-    [TASK_MAIN] = CREATE_TASK("MAIN", NULL, TASK_MASK_ALWAYS, TASK_PRIORITY_REALTIME, NULL, task_main),
-    [TASK_RX] = CREATE_TASK("RX", NULL, TASK_MASK_ALWAYS, TASK_PRIORITY_REALTIME, NULL, rx_update),
+__weak bool rx_poll() {
+  return true;
+}
 
-    [TASK_USB] = CREATE_TASK("USB", NULL, TASK_MASK_ON_GROUND, TASK_PRIORITY_LOW, task_usb_poll, usb_configurator),
+task_t tasks[TASK_MAX] = {
+    [TASK_MAIN] = CREATE_TASK("MAIN", NULL, TASK_MASK_ALWAYS, TASK_PRIORITY_REALTIME, 0, NULL, task_main),
+    [TASK_RX] = CREATE_TASK("RX", NULL, TASK_MASK_ALWAYS, TASK_PRIORITY_REALTIME, 4000, rx_poll, rx_update),
+
+    [TASK_USB] = CREATE_TASK("USB", NULL, TASK_MASK_ON_GROUND, TASK_PRIORITY_LOW, 0, task_usb_poll, usb_configurator),
 #ifdef ENABLE_BLACKBOX
     [TASK_BLACKBOX] = CREATE_TASK("BLACKBOX", NULL, TASK_MASK_ALWAYS, TASK_PRIORITY_HIGH, NULL, blackbox_update),
 #endif
 #ifdef ENABLE_OSD
-    [TASK_OSD] = CREATE_TASK("OSD", NULL, TASK_MASK_ALWAYS, TASK_PRIORITY_HIGH, NULL, osd_display),
+    [TASK_OSD] = CREATE_TASK("OSD", NULL, TASK_MASK_ALWAYS, TASK_PRIORITY_HIGH, 0, NULL, osd_display),
 #endif
-    [TASK_VTX] = CREATE_TASK("VTX", NULL, TASK_MASK_ON_GROUND, TASK_PRIORITY_LOW, NULL, vtx_update),
+    [TASK_VTX] = CREATE_TASK("VTX", NULL, TASK_MASK_ON_GROUND, TASK_PRIORITY_LOW, 0, NULL, vtx_update),
 };

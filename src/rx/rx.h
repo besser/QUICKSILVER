@@ -106,6 +106,7 @@ typedef enum {
 
 void rx_init();
 void rx_update();
+bool rx_poll();
 
 float rx_smoothing_hz(rx_protocol_t proto);
 

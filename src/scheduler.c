@@ -9,6 +9,10 @@
 #include "tasks.h"
 #include "util/cbor_helper.h"
 
+#define TASK_AVERAGE_SAMPLES 32
+#define TASK_RUNTIME_REDUCTION 0.9
+#define TASK_RUNTIME_BUFFER 10
+
 uint8_t looptime_warning;
 uint8_t blown_loop_counter;
 
@@ -46,42 +50,48 @@ static bool task_queue_push(task_t *task) {
 }
 
 static bool should_run_task(const uint32_t start_time, uint8_t task_mask, task_t *task) {
-  if (task->poll_func != NULL && !task->poll_func()) {
-    // task has poll function and does not need updating, skip right away
-    return false;
-  }
+  const uint32_t now = time_micros();
 
   if ((task_mask & task->mask) == 0) {
     // task shall not run in this firmware state
     return false;
   }
 
-  if (task->priority == TASK_PRIORITY_REALTIME) {
-    // realtime tasks always run
-    return true;
+  if ((now - task->last_run_time) < (state.looptime_autodetect + TASK_RUNTIME_BUFFER)) {
+    // task was already run this loop
+    return false;
   }
 
-  const uint32_t time_left = state.looptime_autodetect - (time_micros() - start_time);
-  if (task->runtime_avg < time_left) {
-    return true;
-  } else {
+  if (task->poll_func != NULL && !task->poll_func()) {
+    // task has poll function and does not need updating
+    if (task->period == 0 || (now - task->last_run_time) < task->period) {
+      // task does not have a period associated, can skip
+      return false;
+    }
+  }
+
+  const int32_t time_left = state.looptime_autodetect - (now - start_time);
+  if (task->runtime_avg > (time_left + TASK_RUNTIME_BUFFER)) {
+    // we dont have any time left this loop
     task->runtime_avg *= TASK_RUNTIME_REDUCTION;
+    return false;
   }
 
-  return false;
+  return true;
 }
 
 static void do_run_task(task_t *task) {
   const uint32_t start = time_micros();
   task->last_run_time = start;
   task->func();
-  const uint32_t time_taken = time_micros() - start;
+  const int32_t time_taken = time_micros() - start;
 
   if (time_taken < task->runtime_min) {
     task->runtime_min = time_taken;
   }
 
-  task->runtime_avg_sum += time_taken - task->runtime_avg_sum / TASK_AVERAGE_SAMPLES;
+  task->runtime_avg_sum -= task->runtime_avg;
+  task->runtime_avg_sum += time_taken;
   task->runtime_avg = task->runtime_avg_sum / TASK_AVERAGE_SAMPLES;
 
   if (time_taken > task->runtime_max) {
@@ -99,14 +109,22 @@ static void run_tasks(const uint32_t start_time) {
     task_mask |= TASK_MASK_IN_AIR;
   }
 
-  for (uint32_t i = 0; i < task_queue_size; i++) {
-    task_t *task = task_queue[i];
-
-    if (!should_run_task(start_time, task_mask, task)) {
-      continue;
+  while (true) {
+    // loop as long as we have timeleft
+    const int32_t time_left = state.looptime_autodetect - (time_micros() - start_time);
+    if (time_left <= TASK_RUNTIME_BUFFER) {
+      break;
     }
 
-    do_run_task(task);
+    for (uint32_t i = 0; i < task_queue_size; i++) {
+      task_t *task = task_queue[i];
+
+      if (!should_run_task(start_time, task_mask, task)) {
+        continue;
+      }
+
+      do_run_task(task);
+    }
   }
 }
 
@@ -219,13 +237,13 @@ cbor_result_t cbor_encode_task_stats(cbor_value_t *enc) {
     CBOR_CHECK_ERROR(res = cbor_encode_uint32(enc, &tasks[i].last_run_time));
 
     CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "min"));
-    CBOR_CHECK_ERROR(res = cbor_encode_int32(enc, &tasks[i].runtime_min));
+    CBOR_CHECK_ERROR(res = cbor_encode_uint32(enc, &tasks[i].runtime_min));
 
     CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "avg"));
-    CBOR_CHECK_ERROR(res = cbor_encode_int32(enc, &tasks[i].runtime_avg));
+    CBOR_CHECK_ERROR(res = cbor_encode_uint32(enc, &tasks[i].runtime_avg));
 
     CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "max"));
-    CBOR_CHECK_ERROR(res = cbor_encode_int32(enc, &tasks[i].runtime_max));
+    CBOR_CHECK_ERROR(res = cbor_encode_uint32(enc, &tasks[i].runtime_max));
 
     CBOR_CHECK_ERROR(res = cbor_encode_end_indefinite(enc));
   }
