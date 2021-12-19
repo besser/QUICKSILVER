@@ -63,12 +63,15 @@ static bool should_run_task(const uint32_t start_cycles, uint8_t task_mask, task
     return false;
   }
 
-  if (task->poll_func != NULL && !task->poll_func()) {
-    // task has poll function and does not need updating
-    if (task->period == 0 || (time_cycles() - task->last_run_time) < US_TO_CYCLES(task->period)) {
-      // task does not have a period associated, can skip
-      return false;
-    }
+  const bool poll_result = task->poll_func == NULL || task->poll_func();
+  if (!poll_result && task->period == 0) {
+    // task has polled false and does not need updating due too a period
+    return false;
+  }
+
+  if (!poll_result && task->period != 0 && (time_cycles() - task->last_run_time) < US_TO_CYCLES(task->period)) {
+    // task has a period, but its not up yet
+    return false;
   }
 
   const int32_t time_left = US_TO_CYCLES(state.looptime_autodetect - TASK_RUNTIME_BUFFER) - (time_cycles() - start_cycles);
