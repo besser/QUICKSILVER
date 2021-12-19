@@ -212,8 +212,7 @@ void scheduler_update() {
   run_tasks(cycles);
 
   state.cpu_load = (time_micros() - lastlooptime);
-  while ((time_micros() - time) < state.looptime_autodetect)
-    __NOP();
+  state.loop_counter++;
 }
 
 void reset_looptime() {

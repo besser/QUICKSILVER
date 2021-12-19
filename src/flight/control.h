@@ -39,6 +39,7 @@ extern control_flags_t flags;
 
 typedef struct {
   failloop_t failloop;
+  uint32_t loop_counter;
 
   uint16_t looptime_autodetect;
   float looptime;       // looptime in seconds
@@ -101,6 +102,7 @@ typedef struct {
 
 #define STATE_MEMBERS                       \
   MEMBER(failloop, uint8)                   \
+  MEMBER(loop_counter, uint32)              \
   MEMBER(looptime_autodetect, uint16)       \
   MEMBER(looptime, float)                   \
   MEMBER(looptime_us, uint32)               \

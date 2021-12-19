@@ -3,6 +3,7 @@
 #include "profile.h"
 
 #define BLACKBOX_SCALE 1000
+#define BLACKBOX_RATE 4
 
 typedef struct {
   uint32_t loop;
