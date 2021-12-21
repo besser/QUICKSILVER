@@ -113,16 +113,16 @@ static void run_tasks(const uint32_t start_cycles) {
     task_mask |= TASK_MASK_IN_AIR;
   }
 
+  uint32_t task_index = 0;
   while ((time_cycles() - start_cycles) < US_TO_CYCLES(state.looptime_autodetect - TASK_RUNTIME_BUFFER)) {
-    for (uint32_t i = 0; i < task_queue_size; i++) {
-      task_t *task = task_queue[i];
+    task_t *task = task_queue[task_index];
+    task_index = (task_index + 1) % task_queue_size;
 
-      if (!should_run_task(start_cycles, task_mask, task)) {
-        continue;
-      }
-
-      do_run_task(task);
+    if (!should_run_task(start_cycles, task_mask, task)) {
+      continue;
     }
+
+    do_run_task(task);
   }
 }
 
