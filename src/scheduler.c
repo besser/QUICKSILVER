@@ -75,9 +75,9 @@ static bool should_run_task(const uint32_t start_cycles, uint8_t task_mask, task
   }
 
   const int32_t time_left = US_TO_CYCLES(state.looptime_autodetect - TASK_RUNTIME_BUFFER) - (time_cycles() - start_cycles);
-  if (task->priority != TASK_PRIORITY_REALTIME && task->runtime_avg > time_left) {
+  if (task->priority != TASK_PRIORITY_REALTIME && task->runtime_worst > time_left) {
     // we dont have any time left this loop and task is not realtime
-    task->runtime_avg *= TASK_RUNTIME_REDUCTION;
+    task->runtime_worst *= TASK_RUNTIME_REDUCTION;
     return false;
   }
 
@@ -89,6 +89,10 @@ static void do_run_task(task_t *task) {
   task->last_run_time = start;
   task->func();
   const int32_t time_taken = time_cycles() - start;
+
+  if (time_taken > (task->runtime_avg + US_TO_CYCLES(TASK_RUNTIME_BUFFER))) {
+    task->runtime_worst = time_taken;
+  }
 
   if (time_taken < task->runtime_min) {
     task->runtime_min = time_taken;
@@ -237,7 +241,7 @@ cbor_result_t cbor_encode_task_stats(cbor_value_t *enc) {
     CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "name"));
     CBOR_CHECK_ERROR(res = cbor_encode_str(enc, tasks[i].name));
 
-    CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "last_run_time"));
+    CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "last"));
     ENCODE_CYCLES(tasks[i].last_run_time)
 
     CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "min"));
@@ -248,6 +252,9 @@ cbor_result_t cbor_encode_task_stats(cbor_value_t *enc) {
 
     CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "max"));
     ENCODE_CYCLES(tasks[i].runtime_max)
+
+    CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "worst"));
+    ENCODE_CYCLES(tasks[i].runtime_worst)
 
     CBOR_CHECK_ERROR(res = cbor_encode_end_indefinite(enc));
   }

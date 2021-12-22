@@ -38,6 +38,7 @@ typedef struct {
 
   uint32_t runtime_min;
   uint32_t runtime_avg;
+  uint32_t runtime_worst;
   uint32_t runtime_max;
 
   uint32_t runtime_avg_sum;
@@ -55,6 +56,7 @@ typedef struct {
     .last_run_time = 0,                                                                   \
     .runtime_min = UINT32_MAX,                                                            \
     .runtime_avg = 0,                                                                     \
+    .runtime_worst = 0,                                                                   \
     .runtime_max = 0,                                                                     \
     .runtime_avg_sum = 0,                                                                 \
   }
