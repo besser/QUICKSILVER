@@ -36,6 +36,7 @@ typedef struct {
   uint32_t last_run_time;
   uint32_t period;
 
+  uint32_t runtime_current;
   uint32_t runtime_min;
   uint32_t runtime_avg;
   uint32_t runtime_worst;
@@ -54,6 +55,7 @@ typedef struct {
     .func = p_func,                                                                       \
     .period = p_period,                                                                   \
     .last_run_time = 0,                                                                   \
+    .runtime_current = 0,                                                                 \
     .runtime_min = UINT32_MAX,                                                            \
     .runtime_avg = 0,                                                                     \
     .runtime_worst = 0,                                                                   \

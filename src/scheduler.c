@@ -92,6 +92,8 @@ static void do_run_task(task_t *task) {
   task->func();
   const int32_t time_taken = time_cycles() - start;
 
+  task->runtime_current = time_taken;
+
   if (time_taken < task->runtime_min) {
     task->runtime_min = time_taken;
   }
@@ -244,6 +246,9 @@ cbor_result_t cbor_encode_task_stats(cbor_value_t *enc) {
 
     CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "last"));
     ENCODE_CYCLES(tasks[i].last_run_time)
+
+    CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "current"));
+    ENCODE_CYCLES(tasks[i].runtime_current)
 
     CBOR_CHECK_ERROR(res = cbor_encode_str(enc, "min"));
     ENCODE_CYCLES(tasks[i].runtime_min)
