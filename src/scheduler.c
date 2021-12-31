@@ -23,8 +23,8 @@ uint8_t blown_loop_counter;
 
 static uint32_t lastlooptime;
 
-static task_t *task_queue[TASK_MAX];
-static uint32_t task_queue_size = 0;
+static FAST_RAM task_t *task_queue[TASK_MAX];
+static FAST_RAM uint32_t task_queue_size = 0;
 
 extern int liberror;
 

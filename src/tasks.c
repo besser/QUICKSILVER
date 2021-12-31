@@ -74,7 +74,7 @@ __weak bool rx_poll() {
   return true;
 }
 
-task_t tasks[TASK_MAX] = {
+FAST_RAM task_t tasks[TASK_MAX] = {
     [TASK_MAIN] = CREATE_TASK("MAIN", NULL, TASK_MASK_ALWAYS, TASK_PRIORITY_REALTIME, 0, NULL, task_main),
     [TASK_RX] = CREATE_TASK("RX", NULL, TASK_MASK_ALWAYS, TASK_PRIORITY_HIGH, 4000, rx_poll, rx_update),
 
