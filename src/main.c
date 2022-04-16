@@ -163,6 +163,8 @@ __attribute__((__used__)) int main() {
     failloop(FAILLOOP_SPI);
   }
 
+  reset_looptime();
+
   while (1) {
     scheduler_update();
   }
