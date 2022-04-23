@@ -28,7 +28,10 @@
       .dma_tx = DMA_DEVICE_SPI##chan##_TX,          \
   },
 
-const spi_port_def_t spi_port_defs[SPI_PORTS_MAX] = {{}, SPI_PORTS};
+const spi_port_def_t spi_port_defs[SPI_PORTS_MAX] = {
+    {},
+#include "spi_ports.in"
+};
 
 #undef SPI_PORT
 
@@ -45,7 +48,10 @@ typedef struct {
       .hz = 0,                                      \
   },
 
-static spi_port_config_t spi_port_config[SPI_PORTS_MAX] = {{}, SPI_PORTS};
+static spi_port_config_t spi_port_config[SPI_PORTS_MAX] = {
+    {},
+#include "spi_ports.in"
+};
 
 #undef SPI_PORT
 
@@ -230,12 +236,14 @@ static void spi_dma_reset_tx(spi_ports_t port, uint8_t *tx_data, uint32_t tx_siz
 
 uint8_t spi_dma_is_ready(spi_ports_t port) {
 #if defined(BRUSHLESS_TARGET) && defined(STM32F4)
+/* TODO:
   if (port == SPI_PORT1) {
     extern volatile int dshot_dma_phase;
     if (dshot_dma_phase != 0) {
       return 0;
     }
   }
+*/
 #endif
   return dma_transfer_done[port];
 }
@@ -662,7 +670,8 @@ static void handle_dma_rx_isr(spi_ports_t port) {
 
 void spi_dma_isr(dma_device_t dev) {
   switch (dev) {
-    SPI_PORTS
+
+    // TODO: #include "spi_ports.in"
 
   default:
     break;

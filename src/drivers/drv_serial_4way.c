@@ -111,13 +111,16 @@ uint8_t serial_4way_init() {
 
   time_delay_ms(250);
 
-#define MOTOR_PIN(port, pin, pin_af, timer, timer_channel)     \
-  esc_pins[MOTOR_PIN_IDENT(port, pin)] = PIN_IDENT(port, pin); \
-  avr_bl_init_pin(PIN_IDENT(port, pin));
+  for (uint8_t i = 0; i < MOTOR_MAX; i++) {
+    if (target.motor_pins[i] == MOTOR_PIN_INVALID) {
+      continue;
+    }
 
-  MOTOR_PINS
+    const gpio_pins_t pin = motor_pin_defs[target.motor_pins[i]].pin;
 
-#undef MOTOR_PIN
+    esc_pins[i] = pin;
+    avr_bl_init_pin(pin);
+  }
 
   return ESC_COUNT;
 }

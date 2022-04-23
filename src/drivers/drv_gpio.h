@@ -1,6 +1,5 @@
 #pragma once
 
-#include "gpio_pins.h"
 #include "project.h"
 
 typedef struct {

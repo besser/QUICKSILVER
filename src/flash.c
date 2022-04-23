@@ -88,6 +88,22 @@ void flash_save() {
     fmc_write_buf(VTX_STORAGE_OFFSET, buffer, VTX_STORAGE_SIZE);
   }
 
+  {
+    uint8_t buffer[TARGET_STORAGE_SIZE];
+    memset(buffer, 0, TARGET_STORAGE_SIZE);
+
+    cbor_value_t enc;
+    cbor_encoder_init(&enc, buffer, TARGET_STORAGE_SIZE);
+
+    cbor_result_t res = cbor_encode_target_t(&enc, &target);
+    if (res < CBOR_OK) {
+      fmc_lock();
+      failloop(FAILLOOP_FAULT);
+    }
+
+    fmc_write_buf(TARGET_STORAGE_OFFSET, buffer, TARGET_STORAGE_SIZE);
+  }
+
   fmc_write(FMC_END_OFFSET, FMC_HEADER);
   fmc_lock();
 }
@@ -146,5 +162,19 @@ void flash_load() {
       fmc_lock();
       failloop(FAILLOOP_FAULT);
     }
+  }
+
+  {
+    uint8_t buffer[TARGET_STORAGE_SIZE];
+    memset(buffer, 0, TARGET_STORAGE_SIZE);
+
+    uint32_t *proxy = (uint32_t *)buffer;
+    for (int i = 0; i < (TARGET_STORAGE_SIZE / 4); i++) {
+      proxy[i] = fmc_read((TARGET_STORAGE_OFFSET / 4) + i);
+    }
+
+    cbor_value_t dec;
+    cbor_decoder_init(&dec, buffer, TARGET_STORAGE_SIZE);
+    cbor_decode_target_t(&dec, &target);
   }
 }

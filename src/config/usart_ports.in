@@ -1,8 +1,3 @@
-#pragma once
-
-#include "target.h"
-
-//  CONDITIONAL SELECTION OF DEFINES BASED ON USER SELECTED UART FOR SERIAL RX, TARGET MCU, AND TARGET DEFINED USART ALTERNATE MAPPING PINS
 #ifdef STM32F4
 #define USART1_PA10PA9 USART_PORT(1, PIN_A10, PIN_A9)
 #define USART1_PB7PB6 USART_PORT(1, PIN_B7, PIN_B6)
@@ -51,31 +46,3 @@
 #define USART7_PE7PE8 USART_PORT(7, PIN_E7, PIN_E8)
 #define USART8_PE0PE1 USART_PORT(8, PIN_E0, PIN_E1)
 #endif
-
-#define USART_IDENT(channel) USART_PORT##channel
-#define SOFT_SERIAL_IDENT(channel) SOFT_SERIAL_PORT##channel
-
-typedef enum {
-  USART_PORT_INVALID,
-
-#define USART_PORT(channel, rx_pin, tx_pin) USART_IDENT(channel),
-#define SOFT_SERIAL_PORT(index, rx_pin, tx_pin)
-  USART_PORTS
-#undef USART_PORT
-#undef SOFT_SERIAL_PORT
-      USART_PORTS_MAX,
-
-#ifdef USE_SOFT_SERIAL
-
-#define USART_PORT(channel, rx_pin, tx_pin)
-#define SOFT_SERIAL_PORT(index, rx_pin, tx_pin) SOFT_SERIAL_IDENT(index) = (USART_PORTS_MAX + index - 1),
-  USART_PORTS
-#undef USART_PORT
-#undef SOFT_SERIAL_PORT
-      SOFT_SERIAL_PORTS_MAX,
-
-#else
-  SOFT_SERIAL_PORTS_MAX = USART_PORTS_MAX,
-#endif
-
-} usart_ports_t;

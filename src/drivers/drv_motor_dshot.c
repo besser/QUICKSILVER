@@ -30,15 +30,6 @@
 #define DSHOT_DMA_BUFFER_SIZE (3 * (16 + 2))
 
 typedef struct {
-  motor_pin_ident_t id;
-
-  GPIO_TypeDef *port;
-  uint32_t pin;
-
-  uint32_t dshot_port;
-} motor_pin_t;
-
-typedef struct {
   GPIO_TypeDef *gpio;
 
   uint32_t port_low;  // motor pins for BSRRL, for setting pins low
@@ -55,7 +46,7 @@ static uint32_t pwm_failsafe_time = 1;
 
 volatile uint32_t dshot_dma_phase = 0; // 0: idle, 1 - (gpio_port_count + 1): handle port n
 
-static uint16_t dshot_packet[MOTOR_PIN_MAX]; // 16bits dshot data for 4 motors
+static uint16_t dshot_packet[MOTOR_MAX]; // 16bits dshot data for 4 motors
 static uint8_t gpio_port_count = 0;
 static dshot_gpio_port_t gpio_ports[DSHOT_MAX_PORT_COUNT] = {
     {
@@ -71,40 +62,29 @@ static dshot_gpio_port_t gpio_ports[DSHOT_MAX_PORT_COUNT] = {
         .dma_device = DMA_DEVICE_TIM1_CH4,
     },
 };
-
+static uint32_t dshot_ports[MOTOR_MAX];
 static volatile DMA_RAM uint32_t port_dma_buffer[DSHOT_MAX_PORT_COUNT][DSHOT_DMA_BUFFER_SIZE];
 
-#define MOTOR_PIN(_port, _pin, pin_af, timer, timer_channel) \
-  {                                                          \
-      .id = MOTOR_PIN_IDENT(_port, _pin),                    \
-      .port = GPIO##_port,                                   \
-      .pin = LL_GPIO_PIN_##_pin,                             \
-      .dshot_port = 0,                                       \
-  },
+static void dshot_init_motor_pin(motor_pins_t index) {
+  const gpio_pins_t pin_id = motor_pin_defs[index].pin;
+  const gpio_pin_def_t *pin = &gpio_pin_defs[pin_id];
 
-static motor_pin_t motor_pins[MOTOR_PIN_MAX] = {MOTOR_PINS};
-
-#undef MOTOR_PIN
-
-static void dshot_init_motor_pin(uint32_t index) {
   LL_GPIO_InitTypeDef gpio_init;
   gpio_init.Mode = LL_GPIO_MODE_OUTPUT;
   gpio_init.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   gpio_init.Pull = LL_GPIO_PULL_NO;
   gpio_init.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
-  gpio_init.Pin = motor_pins[index].pin;
-  LL_GPIO_Init(motor_pins[index].port, &gpio_init);
-  LL_GPIO_ResetOutputPin(motor_pins[index].port, motor_pins[index].pin);
+  gpio_pin_init(&gpio_init, pin_id);
 
   for (uint8_t i = 0; i < DSHOT_MAX_PORT_COUNT; i++) {
-    if (gpio_ports[i].gpio == motor_pins[index].port || i == gpio_port_count) {
+    if (gpio_ports[i].gpio == pin->port || i == gpio_port_count) {
       // we already got a matching port in our array
       // or we reached the first empty spot
-      gpio_ports[i].gpio = motor_pins[index].port;
-      gpio_ports[i].port_high |= motor_pins[index].pin;
-      gpio_ports[i].port_low |= (motor_pins[index].pin << 16);
+      gpio_ports[i].gpio = pin->port;
+      gpio_ports[i].port_high |= pin->pin;
+      gpio_ports[i].port_low |= (pin->pin << 16);
 
-      motor_pins[index].dshot_port = i;
+      dshot_ports[index] = i;
 
       if (i + 1 > gpio_port_count) {
         gpio_port_count = i + 1;
@@ -206,8 +186,8 @@ void motor_init() {
   LL_TIM_Init(TIM1, &tim_init);
   LL_TIM_EnableARRPreload(TIM1);
 
-  for (uint32_t i = 0; i < MOTOR_PIN_MAX; i++) {
-    dshot_init_motor_pin(i);
+  for (uint32_t i = 0; i < MOTOR_MAX; i++) {
+    dshot_init_motor_pin(target.motor_pins[i]);
   }
 
   for (uint32_t j = 0; j < gpio_port_count; j++) {
@@ -280,10 +260,11 @@ static void dshot_dma_start() {
       port_dma_buffer[j][(i + 1) * 3 + 2] = gpio_ports[j].port_low;  // return line to low
     }
 
-    for (uint8_t motor = 0; motor < MOTOR_PIN_MAX; motor++) {
-      const uint32_t port = motor_pins[motor].dshot_port;
-      const uint32_t motor_high = (motor_pins[motor].pin);
-      const uint32_t motor_low = (motor_pins[motor].pin << 16);
+    for (uint8_t motor = 0; motor < MOTOR_MAX; motor++) {
+      const uint32_t port = dshot_ports[motor];
+      const gpio_pins_t pin = motor_pin_defs[target.motor_pins[motor]].pin;
+      const uint32_t motor_high = (gpio_pin_defs[pin].pin);
+      const uint32_t motor_low = (gpio_pin_defs[pin].pin << 16);
 
       const bool bit = dshot_packet[motor] & 0x8000;
 
@@ -305,7 +286,8 @@ static void dshot_dma_start() {
 
 void motor_wait_for_ready() {
 #ifdef STM32F4
-  while (dshot_dma_phase != 0 || spi_dma_is_ready(SPI_PORT1) == 0)
+  // TODO: || spi_dma_is_ready(SPI_PORT1) == 0
+  while (dshot_dma_phase != 0)
 #else
   while (dshot_dma_phase != 0)
 #endif

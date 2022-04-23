@@ -6,7 +6,6 @@
 #include "drv_dma.h"
 #include "drv_gpio.h"
 #include "project.h"
-#include "spi_ports.h"
 
 typedef struct {
   uint8_t channel_index;

@@ -301,12 +301,13 @@ bool serial_is_soft(usart_ports_t port) {
       .rx_pin = rx,                   \
       .tx_pin = tx,                   \
   },
-#define SOFT_SERIAL_PORT(index, rx_pin, tx_pin)
 
-usart_port_def_t usart_port_defs[USART_PORTS_MAX] = {{}, USART_PORTS};
+usart_port_def_t usart_port_defs[USART_PORTS_MAX] = {
+    {},
+#include "usart_ports.in"
+};
 
 #undef USART_PORT
-#undef SOFT_SERIAL_PORT
 
 void handle_usart_isr(usart_ports_t port) {
 #ifdef SERIAL_RX
@@ -332,16 +333,14 @@ void handle_usart_isr(usart_ports_t port) {
 
 // we need handlers for both U_S_ART and UART.
 // simply define both for every enabled port.
-#define USART_PORT(channel, rx_pin, tx_pin) \
+#define USART_PORT(channel)                 \
   void USART##channel##_IRQHandler() {      \
     handle_usart_isr(USART_IDENT(channel)); \
   }                                         \
   void UART##channel##_IRQHandler() {       \
     handle_usart_isr(USART_IDENT(channel)); \
   }
-#define SOFT_SERIAL_PORT(index, rx_pin, tx_pin)
 
-USART_PORTS
+// TODO:
 
 #undef USART_PORT
-#undef SOFT_SERIAL_PORT

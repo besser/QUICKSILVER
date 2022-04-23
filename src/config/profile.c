@@ -130,9 +130,11 @@ const profile_t default_profile = {
 #else
         .gyro_orientation = GYRO_ROTATE_NONE,
 #endif
+/* TODO:
 #define MOTOR_PIN(port, pin, pin_af, timer, timer_channel) MOTOR_PIN_IDENT(port, pin),
         .motor_pins = {MOTOR_PINS},
 #undef MOTOR_PIN
+*/
 #ifndef DISABLE_FLIP_SEQUENCER
         .turtle_throttle_percent = 10.0f,
 #else
@@ -479,42 +481,6 @@ const profile_t default_profile = {
     },
 };
 
-#define _MACRO_STR(arg) #arg
-#define MACRO_STR(name) _MACRO_STR(name)
-
-target_info_t target_info = {
-    .target_name = MACRO_STR(TARGET),
-    .git_version = MACRO_STR(GIT_VERSION),
-
-    .features = 0
-#ifdef BRUSHLESS_TARGET
-                | FEATURE_BRUSHLESS
-#endif
-#ifdef ENABLE_OSD
-                | FEATURE_OSD
-#endif
-#ifdef ENABLE_BLACKBOX
-                | FEATURE_BLACKBOX
-#endif
-#ifdef DEBUG
-                | FEATURE_DEBUG
-#endif
-    ,
-    .rx_protocol = RX_PROTOCOL,
-    .quic_protocol_version = QUIC_PROTOCOL_VERSION,
-
-#define MOTOR_PIN(port, pin, pin_af, timer, timer_channel) "P" #port #pin,
-    .motor_pins = {MOTOR_PINS},
-#undef MOTOR_PIN
-
-#define USART_PORT(channel, rx_pin, tx_pin) "USART_" #channel,
-#define SOFT_SERIAL_PORT(index, rx_pin, tx_pin) "SOFT_SERIAL_" #index,
-    .usart_ports = {"NONE", USART_PORTS},
-#undef USART_PORT
-
-    .gyro_id = 0x0,
-};
-
 #pragma GCC diagnostic pop
 
 // the actual profile
@@ -627,10 +593,6 @@ CBOR_END_STRUCT_ENCODER()
 
 CBOR_START_STRUCT_ENCODER(profile_t)
 PROFILE_MEMBERS
-CBOR_END_STRUCT_ENCODER()
-
-CBOR_START_STRUCT_ENCODER(target_info_t)
-TARGET_INFO_MEMBERS
 CBOR_END_STRUCT_ENCODER()
 
 #undef MEMBER

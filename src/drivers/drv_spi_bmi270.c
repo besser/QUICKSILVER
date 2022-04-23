@@ -35,9 +35,9 @@ const uint8_t bmi270_maximum_fifo_config_file[] = {
 
 static void bmi270_init() {
   // put the device in spi mode by toggeling CS
-  gpio_pin_reset(GYRO_NSS);
+  gpio_pin_reset(target.gyro_nss);
   time_delay_ms(1);
-  gpio_pin_set(GYRO_NSS);
+  gpio_pin_set(target.gyro_nss);
   time_delay_ms(10);
 }
 
@@ -61,9 +61,9 @@ void bmi270_configure() {
   time_delay_ms(100);
 
   // put the device in spi mode by toggeling CS
-  gpio_pin_reset(GYRO_NSS);
+  gpio_pin_reset(target.gyro_nss);
   time_delay_ms(1);
-  gpio_pin_set(GYRO_NSS);
+  gpio_pin_set(target.gyro_nss);
   time_delay_ms(10);
 
   bmi270_write(BMI270_REG_PWR_CONF, 0x0);

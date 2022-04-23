@@ -23,7 +23,8 @@ typedef enum {
       .tx_pin = tx,                      \
   },
 
-static volatile soft_serial_t soft_serial_ports[SOFT_SERIAL_PORTS_MAX - USART_PORTS_MAX] = {USART_PORTS};
+// TODO: USART_PORTS
+static volatile soft_serial_t soft_serial_ports[SOFT_SERIAL_PORTS_MAX - USART_PORTS_MAX] = {};
 
 #undef USART_PORT
 #undef SOFT_SERIAL_PORT
