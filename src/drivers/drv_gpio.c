@@ -43,24 +43,6 @@ void gpio_init() {
   init.Pull = LL_GPIO_PULL_NO;
   init.Speed = LL_GPIO_SPEED_FREQ_HIGH;
 
-#ifdef ENABLE_VREG_PIN
-  gpio_pin_init(&init, VREG_PIN_1);
-  gpio_pin_set(VREG_PIN_1);
-#endif
-
-#if (LED_NUMBER > 0)
-  gpio_pin_init(&init, LED1PIN);
-#endif
-#if (LED_NUMBER > 1)
-  gpio_pin_init(&init, LED2PIN);
-#endif
-#if (LED_NUMBER > 2)
-  gpio_pin_init(&init, LED3PIN);
-#endif
-#if (LED_NUMBER > 3)
-  gpio_pin_init(&init, LED4PIN);
-#endif
-
 #if (AUX_LED_NUMBER > 0)
   gpio_pin_init(&init, AUX_LED1PIN);
 #endif
