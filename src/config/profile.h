@@ -7,6 +7,8 @@
 #include "rx.h"
 #include "util/vector.h"
 
+#define OSD_NUMBER_ELEMENTS 32
+
 #define PROFILE_VERSION MAKE_SEMVER(0, 2, 0)
 
 // Rates
