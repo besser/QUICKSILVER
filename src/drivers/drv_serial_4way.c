@@ -112,11 +112,10 @@ uint8_t serial_4way_init() {
   time_delay_ms(250);
 
   for (uint8_t i = 0; i < MOTOR_MAX; i++) {
-    if (target.motor_pins[i] == MOTOR_PIN_INVALID) {
+    const gpio_pins_t pin = target.motor_pins[i];
+    if (pin == PIN_NONE) {
       continue;
     }
-
-    const gpio_pins_t pin = motor_pin_defs[target.motor_pins[i]].pin;
 
     esc_pins[i] = pin;
     avr_bl_init_pin(pin);

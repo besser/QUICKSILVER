@@ -19,17 +19,6 @@ typedef enum {
   MOTOR_MAX
 } motor_index_t;
 
-#define MOTOR_PIN_IDENT(port, pin) MOTOR_PIN_P##port##pin
-#define MOTOR_PIN(port, pin, pin_af, timer, timer_channel) MOTOR_PIN_IDENT(port, pin),
-
-typedef enum {
-  MOTOR_PIN_INVALID,
-#include "motor_pins.in"
-  MOTOR_PIN_MAX
-} motor_pins_t;
-
-#undef MOTOR_PIN
-
 #define USART_IDENT(channel) USART_PORT##channel
 #define SOFT_SERIAL_IDENT(channel) SOFT_SERIAL_PORT##channel
 
@@ -39,13 +28,18 @@ typedef enum {
   SOFT_SERIAL_PORTS_MAX = USART_PORTS_MAX,
 } usart_ports_t;
 
-#define SPI_IDENT(chan, sck_pin, miso_pin, mosi_pin) SPI##chan##_##sck_pin##_##miso_pin##_##mosi_pin
-#define SPI_PORT(chan, sck_pin, miso_pin, mosi_pin) SPI_IDENT(chan, sck_pin, miso_pin, mosi_pin),
+#define SPI_IDENT(spi_prt, dma_prt, chan, rx, tx) SPI_PORT##spi_prt
+#define SPI_PORT(spi_prt, dma_prt, chan, rx, tx) SPI_IDENT(spi_prt, dma_prt, chan, rx, tx),
 
 typedef enum {
   SPI_PORT_INVALID,
-#include "spi_ports.in"
-  SPI_PORTS_MAX,
-} spi_ports_t;
+  SPI_PORT1,
+  SPI_PORT2,
+  SPI_PORT3,
+#if defined(STM32F7) || defined(STM32H7)
+  SPI_PORT4,
+#endif
+  SPI_PORT_MAX,
+} spi_port_index_t;
 
 #undef SPI_PORT

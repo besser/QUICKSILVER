@@ -13,10 +13,6 @@ typedef struct {
 
   uint32_t gpio_af;
 
-  gpio_pins_t sck;
-  gpio_pins_t miso;
-  gpio_pins_t mosi;
-
   dma_device_t dma_rx;
   dma_device_t dma_tx;
 } spi_port_def_t;
@@ -63,7 +59,7 @@ typedef struct {
 } spi_txn_t;
 
 typedef struct spi_bus_device {
-  spi_ports_t port;
+  spi_port_index_t port;
   gpio_pins_t nss;
 
   uint8_t *buffer;
@@ -83,10 +79,10 @@ typedef struct spi_bus_device {
   uint32_t hz;
 } spi_bus_device_t;
 
-extern const spi_port_def_t spi_port_defs[SPI_PORTS_MAX];
+extern const spi_port_def_t spi_port_defs[SPI_PORT_MAX];
 
-uint8_t spi_dma_is_ready(spi_ports_t port);
-bool spi_dma_wait_for_ready(spi_ports_t port);
+uint8_t spi_dma_is_ready(spi_port_index_t port);
+bool spi_dma_wait_for_ready(spi_port_index_t port);
 
 void spi_bus_device_init(spi_bus_device_t *bus);
 void spi_bus_device_reconfigure(spi_bus_device_t *bus, spi_mode_t mode, uint32_t hz);
