@@ -6,14 +6,14 @@
 #include "profile.h"
 #include "project.h"
 
-usart_ports_t serial_rx_port = USART_PORT_INVALID;
-usart_ports_t serial_smart_audio_port = USART_PORT_INVALID;
-usart_ports_t serial_hdzero_port = USART_PORT_INVALID;
+serial_port_index_t serial_rx_port = SERIAL_PORT_INVALID;
+serial_port_index_t serial_smart_audio_port = SERIAL_PORT_INVALID;
+serial_port_index_t serial_hdzero_port = SERIAL_PORT_INVALID;
 
 #define USART usart_port_defs[port]
 
 // FUNCTION TO SET APB CLOCK TO USART BASED ON GIVEN UART
-void serial_enable_rcc(usart_ports_t port) {
+void serial_enable_rcc(serial_port_index_t port) {
   switch (usart_port_defs[port].channel_index) {
 #ifdef USART1
   case 1:
@@ -58,7 +58,7 @@ void serial_enable_rcc(usart_ports_t port) {
   }
 }
 
-void serial_enable_isr(usart_ports_t port) {
+void serial_enable_isr(serial_port_index_t port) {
   switch (usart_port_defs[port].channel_index) {
 #ifdef USART1
   case 1:
@@ -103,7 +103,7 @@ void serial_enable_isr(usart_ports_t port) {
   }
 }
 
-void serial_disable_isr(usart_ports_t port) {
+void serial_disable_isr(serial_port_index_t port) {
   switch (usart_port_defs[port].channel_index) {
 #ifdef USART1
   case 1:
@@ -148,7 +148,7 @@ void serial_disable_isr(usart_ports_t port) {
   }
 }
 
-void serial_port_init(usart_ports_t port, LL_USART_InitTypeDef *usart_init, bool half_duplex) {
+void serial_port_init(serial_port_index_t port, LL_USART_InitTypeDef *usart_init, bool half_duplex) {
   LL_USART_Disable(USART.channel);
   LL_USART_DeInit(USART.channel);
 
@@ -187,7 +187,7 @@ void serial_port_init(usart_ports_t port, LL_USART_InitTypeDef *usart_init, bool
 #endif
 }
 
-void serial_init(usart_ports_t port, uint32_t baudrate, bool half_duplex) {
+void serial_init(serial_port_index_t port, uint32_t baudrate, bool half_duplex) {
 
   LL_GPIO_InitTypeDef gpio_init;
   gpio_init.Mode = LL_GPIO_MODE_ALTERNATE;
@@ -195,12 +195,12 @@ void serial_init(usart_ports_t port, uint32_t baudrate, bool half_duplex) {
   if (half_duplex) {
     gpio_init.OutputType = LL_GPIO_OUTPUT_OPENDRAIN;
     gpio_init.Pull = LL_GPIO_PULL_NO;
-    gpio_pin_init_af(&gpio_init, USART.tx_pin, USART.gpio_af);
+    gpio_pin_init_af(&gpio_init, target.serial_ports[port - 1].tx_pin, USART.gpio_af);
   } else {
     gpio_init.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
     gpio_init.Pull = LL_GPIO_PULL_UP;
-    gpio_pin_init_af(&gpio_init, USART.rx_pin, USART.gpio_af);
-    gpio_pin_init_af(&gpio_init, USART.tx_pin, USART.gpio_af);
+    gpio_pin_init_af(&gpio_init, target.serial_ports[port - 1].rx_pin, USART.gpio_af);
+    gpio_pin_init_af(&gpio_init, target.serial_ports[port - 1].tx_pin, USART.gpio_af);
   }
 
   LL_USART_InitTypeDef usart_init;
@@ -215,7 +215,7 @@ void serial_init(usart_ports_t port, uint32_t baudrate, bool half_duplex) {
   serial_port_init(port, &usart_init, half_duplex);
 }
 
-bool serial_read_bytes(usart_ports_t port, uint8_t *data, const uint32_t size) {
+bool serial_read_bytes(serial_port_index_t port, uint8_t *data, const uint32_t size) {
   for (uint32_t i = 0; i < size; i++) {
     uint32_t start = time_micros();
     while (!LL_USART_IsActiveFlag_RXNE(USART.channel)) {
@@ -230,7 +230,7 @@ bool serial_read_bytes(usart_ports_t port, uint8_t *data, const uint32_t size) {
   return true;
 }
 
-bool serial_write_bytes(usart_ports_t port, const uint8_t *data, const uint32_t size) {
+bool serial_write_bytes(serial_port_index_t port, const uint8_t *data, const uint32_t size) {
   for (uint32_t i = 0; i < size; i++) {
     uint32_t start = time_micros();
     while (!LL_USART_IsActiveFlag_TXE(USART.channel)) {
@@ -258,8 +258,8 @@ bool serial_write_bytes(usart_ports_t port, const uint8_t *data, const uint32_t 
   return true;
 }
 
-bool serial_is_soft(usart_ports_t port) {
-  if (port < USART_PORTS_MAX) {
+bool serial_is_soft(serial_port_index_t port) {
+  if (port < SERIAL_PORT_MAX) {
     return false;
   }
   return true;
@@ -293,23 +293,21 @@ bool serial_is_soft(usart_ports_t port) {
 
 #define GPIO_AF_USART8 GPIO_AF8_UART8
 
-#define USART_PORT(chan, rx, tx)      \
+#define SERIAL_PORT(chan)             \
   {                                   \
       .channel_index = chan,          \
       .channel = USART##chan,         \
       .gpio_af = GPIO_AF_USART##chan, \
-      .rx_pin = rx,                   \
-      .tx_pin = tx,                   \
   },
 
-usart_port_def_t usart_port_defs[USART_PORTS_MAX] = {
+usart_port_def_t usart_port_defs[SERIAL_PORT_MAX] = {
     {},
-#include "usart_ports.in"
+#include "serial_ports.in"
 };
 
-#undef USART_PORT
+#undef SERIAL_PORT
 
-void handle_usart_isr(usart_ports_t port) {
+void handle_usart_isr(serial_port_index_t port) {
 #ifdef SERIAL_RX
   extern void rx_serial_isr();
   if (serial_rx_port == port) {
@@ -333,14 +331,14 @@ void handle_usart_isr(usart_ports_t port) {
 
 // we need handlers for both U_S_ART and UART.
 // simply define both for every enabled port.
-#define USART_PORT(channel)                 \
-  void USART##channel##_IRQHandler() {      \
-    handle_usart_isr(USART_IDENT(channel)); \
-  }                                         \
-  void UART##channel##_IRQHandler() {       \
-    handle_usart_isr(USART_IDENT(channel)); \
+#define SERIAL_PORT(channel)                 \
+  void USART##channel##_IRQHandler() {       \
+    handle_usart_isr(SERIAL_IDENT(channel)); \
+  }                                          \
+  void UART##channel##_IRQHandler() {        \
+    handle_usart_isr(SERIAL_IDENT(channel)); \
   }
 
-// TODO:
+#include "serial_ports.in"
 
-#undef USART_PORT
+#undef SERIAL_PORT

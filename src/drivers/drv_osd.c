@@ -11,7 +11,7 @@ static osd_transaction_t osd_txn;
 static osd_device_t osd_device = OSD_DEVICE_NONE;
 
 void osd_device_init() {
-  if (profile.serial.hdzero != USART_PORT_INVALID) {
+  if (profile.serial.hdzero != SERIAL_PORT_INVALID) {
     osd_device = OSD_DEVICE_HDZERO;
     hdzero_init();
   } else {

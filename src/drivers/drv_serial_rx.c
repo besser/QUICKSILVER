@@ -122,7 +122,7 @@ void serial_rx_init(rx_serial_protocol_t proto) {
     gpio_init.OutputType = LL_GPIO_OUTPUT_OPENDRAIN;
     gpio_init.Pull = LL_GPIO_PULL_UP;
 
-    gpio_pin_init_af(&gpio_init, USART.rx_pin, USART.gpio_af);
+    gpio_pin_init_af(&gpio_init, target.serial_ports[serial_rx_port - 1].rx_pin, USART.gpio_af);
     break;
 
   case RX_SERIAL_PROTOCOL_SBUS:
@@ -134,7 +134,7 @@ void serial_rx_init(rx_serial_protocol_t proto) {
     gpio_init.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
     gpio_init.Pull = LL_GPIO_PULL_NO;
 
-    gpio_pin_init_af(&gpio_init, USART.rx_pin, USART.gpio_af);
+    gpio_pin_init_af(&gpio_init, target.serial_ports[serial_rx_port - 1].rx_pin, USART.gpio_af);
     break;
 
   default:
@@ -149,7 +149,7 @@ void serial_rx_init(rx_serial_protocol_t proto) {
     gpio_init.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
     gpio_init.Pull = LL_GPIO_PULL_NO;
 
-    gpio_pin_init_af(&gpio_init, USART.tx_pin, USART.gpio_af);
+    gpio_pin_init_af(&gpio_init, target.serial_ports[serial_rx_port - 1].tx_pin, USART.gpio_af);
     break;
 
   default:

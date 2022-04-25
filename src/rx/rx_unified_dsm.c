@@ -38,7 +38,7 @@ extern int current_pid_axis;
 extern int current_pid_term;
 
 #define USART usart_port_defs[serial_rx_port]
-#define SPECTRUM_BIND_PIN usart_port_defs[profile.serial.rx].rx_pin
+#define SPECTRUM_BIND_PIN target.serial_ports[profile.serial.rx - 1].rx_pin
 
 bool rx_serial_process_dsm() {
   bool channels_received = false;
@@ -136,7 +136,7 @@ bool rx_serial_process_dsm() {
 
 // Send Spektrum bind pulses to a GPIO e.g. TX1
 void rx_spektrum_bind() {
-  if (profile.serial.rx == USART_PORT_INVALID) {
+  if (profile.serial.rx == SERIAL_PORT_INVALID) {
     return;
   }
 

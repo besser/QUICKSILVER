@@ -70,7 +70,7 @@ static void serial_smart_audio_reconfigure() {
   GPIO_InitStructure.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStructure.Pull = LL_GPIO_PULL_NO;
   GPIO_InitStructure.Speed = LL_GPIO_SPEED_FREQ_HIGH;
-  gpio_pin_init_af(&GPIO_InitStructure, USART.tx_pin, USART.gpio_af);
+  gpio_pin_init_af(&GPIO_InitStructure, target.serial_ports[serial_smart_audio_port - 1].tx_pin, USART.gpio_af);
 
   LL_USART_InitTypeDef usart_init;
   LL_USART_StructInit(&usart_init);

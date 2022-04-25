@@ -97,11 +97,11 @@
 //#define RX_EXPRESS_LRS
 
 // *************Serial Receiver UART Selection (uncomment all for default from target or if using spi receiver)																		//todo:  Many missing usart AF setups, So plenty more to do here
-//#define RX_USART USART_PORT1
-//#define RX_USART USART_PORT2
-//#define RX_USART USART_PORT3
-//#define RX_USART USART_PORT4
-//#define RX_USART USART_PORT6
+//#define RX_SERIAL SERIAL_PORT1
+//#define RX_SERIAL SERIAL_PORT2
+//#define RX_SERIAL SERIAL_PORT3
+//#define RX_SERIAL SERIAL_PORT4
+//#define RX_SERIAL SERIAL_PORT6
 
 // *************Serial Receiver Inversion Selection  (Normally true for SBUS and FPORT)
 //#define INVERT_UART

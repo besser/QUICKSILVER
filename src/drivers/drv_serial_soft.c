@@ -24,12 +24,12 @@ typedef enum {
   },
 
 // TODO: USART_PORTS
-static volatile soft_serial_t soft_serial_ports[SOFT_SERIAL_PORTS_MAX - USART_PORTS_MAX] = {};
+static volatile soft_serial_t soft_serial_ports[] = {};
 
 #undef USART_PORT
 #undef SOFT_SERIAL_PORT
 
-#define DEV soft_serial_ports[port - USART_PORTS_MAX]
+#define DEV soft_serial_ports[port - SERIAL_PORT_MAX]
 
 extern void soft_serial_rx_isr();
 extern void soft_serial_tx_isr();
@@ -48,11 +48,11 @@ static void soft_serial_timer_stop() {
   LL_TIM_DisableCounter(TIMER_INSTANCE);
 }
 
-static int soft_serial_is_1wire(usart_ports_t port) {
+static int soft_serial_is_1wire(serial_port_index_t port) {
   return DEV.tx_pin == DEV.rx_pin;
 }
 
-static void soft_serial_init_rx(usart_ports_t port) {
+static void soft_serial_init_rx(serial_port_index_t port) {
   if (DEV.rx_pin == PIN_NONE) {
     return;
   }
@@ -72,7 +72,7 @@ static void soft_serial_init_rx(usart_ports_t port) {
   DEV.rx_active = true;
 }
 
-static void soft_serial_init_tx(usart_ports_t port) {
+static void soft_serial_init_tx(serial_port_index_t port) {
   if (DEV.tx_pin == PIN_NONE) {
     return;
   }
@@ -92,19 +92,19 @@ static void soft_serial_init_tx(usart_ports_t port) {
   DEV.tx_active = true;
 }
 
-static void soft_serial_set_input(usart_ports_t port) {
+static void soft_serial_set_input(serial_port_index_t port) {
   if (soft_serial_is_1wire(port) && !DEV.rx_active) {
     soft_serial_init_rx(port);
   }
 }
 
-static void soft_serial_set_output(usart_ports_t port) {
+static void soft_serial_set_output(serial_port_index_t port) {
   if (soft_serial_is_1wire(port) && !DEV.tx_active) {
     soft_serial_init_tx(port);
   }
 }
 
-uint8_t soft_serial_init(usart_ports_t port, uint32_t baudrate, uint8_t stop_bits) {
+uint8_t soft_serial_init(serial_port_index_t port, uint32_t baudrate, uint8_t stop_bits) {
   soft_serial_timer_stop();
 
   DEV.baud = baudrate;
@@ -122,7 +122,7 @@ uint8_t soft_serial_init(usart_ports_t port, uint32_t baudrate, uint8_t stop_bit
   return 1;
 }
 
-void soft_serial_enable_write(usart_ports_t port) {
+void soft_serial_enable_write(serial_port_index_t port) {
   DEV.tx_state = START_BIT;
 
   soft_serial_timer_stop();
@@ -130,22 +130,22 @@ void soft_serial_enable_write(usart_ports_t port) {
   soft_serial_timer_start();
 }
 
-void soft_serial_enable_read(usart_ports_t port) {
+void soft_serial_enable_read(serial_port_index_t port) {
   DEV.rx_state = START_BIT;
 
   soft_serial_set_input(port);
   soft_serial_timer_start();
 }
 
-uint8_t soft_serial_read_byte(usart_ports_t port) {
+uint8_t soft_serial_read_byte(serial_port_index_t port) {
   return DEV.rx_byte;
 }
 
-void soft_serial_write_byte(usart_ports_t port, uint8_t byte) {
+void soft_serial_write_byte(serial_port_index_t port, uint8_t byte) {
   DEV.tx_byte = byte;
 }
 
-void soft_serial_tx_update(usart_ports_t port) {
+void soft_serial_tx_update(serial_port_index_t port) {
   if (!DEV.tx_active) {
     return;
   }
@@ -176,7 +176,7 @@ void soft_serial_tx_update(usart_ports_t port) {
   DEV.tx_state++;
 }
 
-void soft_serial_rx_update(usart_ports_t port) {
+void soft_serial_rx_update(serial_port_index_t port) {
   if (!DEV.rx_active) {
     return;
   }
@@ -238,10 +238,12 @@ void soft_serial_rx_update(usart_ports_t port) {
 
 void TIM4_IRQHandler() {
   if (LL_TIM_IsActiveFlag_UPDATE(TIMER_INSTANCE)) {
-    for (uint8_t port = USART_PORTS_MAX; port < SOFT_SERIAL_PORTS_MAX; port++) {
+    /* TODO:
+    for (uint8_t port = SERIAL_PORT_MAX; port < SOFT_SERIAL_PORTS_MAX; port++) {
       soft_serial_tx_update(port);
       soft_serial_rx_update(port);
     }
+    */
     LL_TIM_ClearFlag_UPDATE(TIMER_INSTANCE);
   }
 }

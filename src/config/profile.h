@@ -232,9 +232,9 @@ typedef struct {
   ARRAY_MEMBER(stick_calibration_limits, 4, profile_stick_calibration_limits_t)
 
 typedef struct {
-  usart_ports_t rx;
-  usart_ports_t smart_audio;
-  usart_ports_t hdzero;
+  serial_port_index_t rx;
+  serial_port_index_t smart_audio;
+  serial_port_index_t hdzero;
 } profile_serial_t;
 
 #define SERIAL_MEMBERS       \

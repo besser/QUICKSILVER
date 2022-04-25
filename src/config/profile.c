@@ -143,20 +143,20 @@ const profile_t default_profile = {
     },
 
     .serial = {
-#ifdef RX_USART
-        .rx = RX_USART,
+#ifdef RX_SERIAL
+        .rx = RX_SERIAL,
 #else
-        .rx = USART_PORT_INVALID,
+        .rx = SERIAL_PORT_INVALID,
 #endif
-#ifdef SMART_AUDIO_USART
-        .smart_audio = SMART_AUDIO_USART,
+#ifdef SMART_AUDIO_SERIAL
+        .smart_audio = SMART_AUDIO_SERIAL,
 #else
-        .smart_audio = USART_PORT_INVALID,
+        .smart_audio = SERIAL_PORT_INVALID,
 #endif
-#ifdef HDZERO_USART
-        .hdzero = HDZERO_USART,
+#ifdef HDZERO_SERIAL
+        .hdzero = HDZERO_SERIAL,
 #else
-        .hdzero = USART_PORT_INVALID,
+        .hdzero = SERIAL_PORT_INVALID,
 #endif
     },
 

@@ -19,14 +19,16 @@ typedef enum {
   MOTOR_MAX
 } motor_index_t;
 
-#define USART_IDENT(channel) USART_PORT##channel
-#define SOFT_SERIAL_IDENT(channel) SOFT_SERIAL_PORT##channel
+#define SERIAL_IDENT(channel) SERIAL_PORT##channel
+#define SERIAL_PORT(channel) SERIAL_IDENT(channel),
 
 typedef enum {
-  USART_PORT_INVALID,
-  USART_PORTS_MAX,
-  SOFT_SERIAL_PORTS_MAX = USART_PORTS_MAX,
-} usart_ports_t;
+  SERIAL_PORT_INVALID,
+#include "serial_ports.in"
+  SERIAL_PORT_MAX,
+} serial_port_index_t;
+
+#undef SERIAL_PORT
 
 #define SPI_IDENT(spi_prt, dma_prt, chan, rx, tx) SPI_PORT##spi_prt
 #define SPI_PORT(spi_prt, dma_prt, chan, rx, tx) SPI_IDENT(spi_prt, dma_prt, chan, rx, tx),

@@ -43,6 +43,17 @@ typedef struct {
 
 typedef struct {
   uint8_t index;
+  gpio_pins_t rx_pin;
+  gpio_pins_t tx_pin;
+} serial_port_t;
+
+#define SERIAL_PORT_MEMBERS   \
+  MEMBER(index, uint8)        \
+  MEMBER(rx_pin, gpio_pins_t) \
+  MEMBER(tx_pin, gpio_pins_t)
+
+typedef struct {
+  uint8_t index;
   gpio_pins_t sck;
   gpio_pins_t miso;
   gpio_pins_t mosi;
@@ -61,10 +72,15 @@ typedef struct {
   uint8_t led_pin_count;
 
   gpio_pins_t motor_pins[MOTOR_MAX];
+  serial_port_t serial_ports[SERIAL_PORT_MAX - 1];
   spi_port_t spi_ports[SPI_PORT_MAX - 1];
+
+  gpio_pins_t vbat;
+  gpio_pins_t ibat;
 
   spi_port_index_t gyro_spi_port;
   gpio_pins_t gyro_nss;
+  gpio_pins_t gyro_int;
 } target_t;
 
 #define TARGET_MEMBERS                                  \
@@ -73,8 +89,11 @@ typedef struct {
   MEMBER(led_pin_count, uint8)                          \
   ARRAY_MEMBER(motor_pins, MOTOR_MAX, gpio_pins_t)      \
   ARRAY_MEMBER(spi_ports, SPI_PORT_MAX - 1, spi_port_t) \
+  MEMBER(vbat, gpio_pins_t)                             \
+  MEMBER(ibat, gpio_pins_t)                             \
   MEMBER(gyro_spi_port, spi_port_index_t)               \
-  MEMBER(gyro_nss, gpio_pins_t)
+  MEMBER(gyro_nss, gpio_pins_t)                         \
+  MEMBER(gyro_int, gpio_pins_t)
 
 extern target_info_t target_info;
 extern target_t target;
