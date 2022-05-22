@@ -4,6 +4,7 @@
 #include "scheduler.h"
 
 typedef enum {
+  TASK_GYRO,
   TASK_MAIN,
   TASK_RX,
   TASK_USB,

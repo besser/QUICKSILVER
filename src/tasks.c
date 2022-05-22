@@ -21,9 +21,6 @@
 #include "rx.h"
 
 void task_main() {
-  // read gyro and accelerometer data
-  sixaxis_read();
-
   // all flight calculations and motors
   control();
 
@@ -75,8 +72,9 @@ __weak bool rx_poll() {
 }
 
 FAST_RAM task_t tasks[TASK_MAX] = {
+    [TASK_GYRO] = CREATE_TASK("GYRO", NULL, TASK_MASK_ALWAYS, TASK_PRIORITY_REALTIME, 0, NULL, sixaxis_read),
     [TASK_MAIN] = CREATE_TASK("MAIN", NULL, TASK_MASK_ALWAYS, TASK_PRIORITY_REALTIME, 0, NULL, task_main),
-    [TASK_RX] = CREATE_TASK("RX", NULL, TASK_MASK_ALWAYS, TASK_PRIORITY_HIGH, 4000, rx_poll, rx_update),
+    [TASK_RX] = CREATE_TASK("RX", NULL, TASK_MASK_ALWAYS, TASK_PRIORITY_HIGH, 0, rx_poll, rx_update),
 
     [TASK_USB] = CREATE_TASK("USB", NULL, TASK_MASK_ON_GROUND, TASK_PRIORITY_LOW, 0, task_usb_poll, usb_configurator),
 #ifdef ENABLE_BLACKBOX
